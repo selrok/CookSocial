@@ -14,7 +14,7 @@ const mockIndexData = {
             publishDate: "2025-05-15T10:00:00Z",
             category: "main", 
             diet: 1, 
-            difficulty: "medium"
+            difficulty: "normal"
         },
         {
             id: "tiramisu-clasico",
@@ -28,7 +28,7 @@ const mockIndexData = {
             publishDate: "2024-07-15T14:30:00Z",
             category: "dessert", 
             diet: 2, 
-            difficulty: "easy"
+            difficulty: "facil"
         },
         {
             id: "tacos-al-pastor",
@@ -42,7 +42,7 @@ const mockIndexData = {
             publishDate: "2024-07-01T08:00:00Z",
             category: "main", 
             diet: 1, 
-            difficulty: "medium"
+            difficulty: "normal"
         },
         {
             id: "acai-bowl",
@@ -56,7 +56,7 @@ const mockIndexData = {
             publishDate: "2024-07-18T09:00:00Z",
             category: "dessert",
             diet: 3, 
-            difficulty: "easy"
+            difficulty: "facil"
         },
         {
             id: "ramen-casero",
@@ -70,7 +70,7 @@ const mockIndexData = {
             publishDate: "2024-07-16T12:00:00Z",
             category: "main", 
             diet: 1, 
-            difficulty: "hard"
+            difficulty: "dificil"
         },
         {
             id: "poke-salmon",
@@ -84,7 +84,7 @@ const mockIndexData = {
             publishDate: "2024-07-17T18:00:00Z",
             category: "main", 
             diet: 1, 
-            difficulty: "easy"
+            difficulty: "facil"
         },
         {
             id: "poke-salmon",
@@ -98,22 +98,22 @@ const mockIndexData = {
             publishDate: "2025-05-26T18:00:00Z",
             category: "main", 
             diet: 1, 
-            difficulty: "easy"
+            difficulty: "facil"
         },
         {
-            id: "sopa-lentejas-plus",
-            title: "Sopa de Lentejas (+3h)",
-            author: "Abuela Carmen",
-            authorId: "abuela-carmen",
-            image: "https://plus.unsplash.com/premium_photo-1667249229962-52ufac2a4d34?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8c29wYSUyMGRlJTIwbGVudGVqYXN8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
-            likes: 455,
-            time: "3 horas 30 min", 
-            timeInMinutes: 210,    
-            publishDate: "2024-06-20T10:00:00Z",
-            category: "main", 
-            diet: 11, 
-            difficulty: "medium"
-        }
+            id: "gazpacho-andaluz",
+            title: "Gazpacho Andaluz Refrescante",
+            author: "Sofía Martínez",
+            authorId: "sofia-martinez",
+            image: "https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+            likes: 410,
+            time: "10 min",
+            timeInMinutes: 10,
+            publishDate: "2025-05-19T11:00:00Z",
+            category: "dessert",
+            diet: 3,
+            difficulty: "facil"
+        }       
     ],
     chefs: [
         { id: "maria-garcia", name: "María Rodríguez", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80", followers: "50K" },
@@ -122,5 +122,3 @@ const mockIndexData = {
         { id: "emily-chen", name: "Emily Chen", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80", followers: "28K" }
     ]
 };
-
-console.log("index-data.js: mockIndexData definido:", typeof mockIndexData !== 'undefined'); // Para confirmar que se define

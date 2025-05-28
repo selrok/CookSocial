@@ -15,7 +15,14 @@ body {
             color: $dark;
         }
     }
-
+    .btn-orange{
+        background-color: $orange;
+        color: $light;
+        &:hover {
+            background-color: darken($orange, 13%);
+            color: $light;
+        }
+    }
     .nav-tabs {
         .nav-link {
             font-weight: 500;
