@@ -14,6 +14,8 @@
     <link rel="icon" type="image/svg+xml" href="resources/favicon.jpg">
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Ajax -->
+     <script src="js/ajax/auth-service.js"></script>
     <!--Notificaciones-->
     <script src="js/notifications.js"></script>
     <!-- CSS personalizado -->
@@ -52,54 +54,60 @@
                     <!-- Contenido de las pestañas -->
                     <div class="tab-content p-4 p-md-5">
                         <!-- Pestaña de Registro -->
-                        <div class="tab-pane fade show active" id="register" role="tabpanel">
-                            <h2 class="card-title text-center mb-4">Crear una cuenta</h2>
-                            <p class="text-muted text-center mb-4">Únete a nuestra comunidad</p>
-                            
-                            <form id="registerForm" class="needs-validation" novalidate>
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Nombre completo</label>
-                                    <input type="text" class="form-control" id="name" placeholder="Ej. María García" required>
-                                    <div class="invalid-feedback">Por favor ingresa tu nombre</div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">Nombre de usuario</label>
-                                    <input type="text" class="form-control" id="username" placeholder="Ej. maria_garcia" required>
-                                    <div class="invalid-feedback">Por favor ingresa un usuario</div>
-                                </div>
+                        <!-- Pestaña de Registro en logReg.html -->
+<div class="tab-pane fade show active" id="register" role="tabpanel">
+    <h2 class="card-title text-center mb-4">Crear una cuenta</h2>
+    <p class="text-muted text-center mb-4">Únete a nuestra comunidad</p>
+    
+    <!-- DIV PARA MENSAJES AJAX (lo añade el JS, pero podrías ponerlo aquí si prefieres) -->    
+    <form id="registerForm" class="needs-validation" novalidate>
+        <div class="mb-3">
+            <label for="regName" class="form-label" >Nombre completo</span></label>
+            <input type="text" class="form-control" id="regName" placeholder="Ej. María García" required>
+            <!-- No se requiere validación Bootstrap 'required' si es opcional -->
+        </div>
+        
+        <div class="mb-3">
+            <label for="regUsername" class="form-label">Nombre de usuario</label>
+            <input type="text" class="form-control" id="regUsername" placeholder="Ej. maria_garcia" required>
+            <div class="invalid-feedback">Por favor ingresa un nombre de usuario.</div>
+        </div>
 
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">Correo Electrónico</label>
-                                    <input type="email" class="form-control" id="email" placeholder="Ej. username@gmail.com" required>
-                                    <div class="invalid-feedback">Por favor ingresa un Correo</div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Contraseña</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control" id="password" placeholder="Mínimo 8 caracteres" required minlength="8">
-                                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password">
-                                            <i class="far fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <div class="invalid-feedback">La contraseña debe tener al menos 8 caracteres</div>
-                                </div>
-                                
-                                <div class="mb-4">
-                                    <label for="confirmPassword" class="form-label">Confirmar contraseña</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control" id="confirmPassword" placeholder="Repite tu contraseña" required>
-                                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="confirmPassword">
-                                            <i class="far fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <div class="invalid-feedback">Las contraseñas no coinciden</div>
-                                </div>
-                                
-                                <button type="submit" class="btn btn-orange w-100 py-2 mb-3">Registrarse</button>
-                            </form>
-                        </div>
+        <div class="mb-3">
+            <label for="regEmail" class="form-label">Correo Electrónico</label>
+            <input type="email" class="form-control" id="regEmail" placeholder="Ej. username@gmail.com" required>
+            <div class="invalid-feedback">Por favor ingresa un correo electrónico válido.</div>
+        </div>
+        
+        <div class="mb-3">
+            <label for="regPassword" class="form-label">Contraseña</label>
+            <div class="input-group">
+                <input type="password" class="form-control" id="regPassword" placeholder="Tu contraseña" required>
+                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="regPassword">
+                    <i class="far fa-eye"></i>
+                </button>
+            </div>
+            <!-- Feedback para validación de fortaleza de contraseña -->
+            <div class="invalid-feedback-strength mt-1"></div> 
+            <div class="invalid-feedback">Por favor ingresa una contraseña.</div> <!-- Mensaje genérico de 'required' -->
+        </div>
+        
+        <div class="mb-4">
+            <label for="regConfirmPassword" class="form-label">Confirmar contraseña</label>
+            <div class="input-group">
+                <input type="password" class="form-control" id="regConfirmPassword" placeholder="Repite tu contraseña" required>
+                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="regConfirmPassword">
+                    <i class="far fa-eye"></i>
+                </button>
+            </div>
+            <!-- Feedback para cuando no coinciden -->
+            <div id="regConfirmPasswordFeedback" class="invalid-feedback d-block"></div> 
+            <div class="invalid-feedback">Por favor confirma tu contraseña.</div> <!-- Mensaje genérico de 'required' -->
+        </div>
+        
+        <button type="submit" class="btn btn-orange w-100 py-2 mb-3">Registrarse</button>
+    </form>
+</div>
 
                         <!-- Pestaña de Inicio de Sesión -->
                         <div class="tab-pane fade" id="login" role="tabpanel">
@@ -109,7 +117,7 @@
                             <form id="loginForm">
                                 <div class="mb-3">
                                     <label for="loginUsername" class="form-label">Nombre de usuario</label>
-                                    <input type="text" class="form-control" id="loginUsername" placeholder="Tu nombre de usuario" required>
+                                    <input type="text" class="form-control" id="loginUsername" placeholder="Tu nombre de usuario o Correo" required>
                                 </div>
                                 
                                 <div class="mb-3">

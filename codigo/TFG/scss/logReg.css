@@ -7,6 +7,14 @@ body .text-orange {
 body .text-orangehover {
   color: #212529;
 }
+body .btn-orange {
+  background-color: #fd7e14;
+  color: #f8f9fa;
+}
+body .btn-orange:hover {
+  background-color: #cd5e02;
+  color: #f8f9fa;
+}
 body .nav-tabs .nav-link {
   font-weight: 500;
 }
