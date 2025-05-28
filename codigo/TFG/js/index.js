@@ -1,292 +1,289 @@
-// js/index.js
+// TFG/js/index.js
 $(document).ready(function() {
-    // Mensaje inicial para confirmar que este script se está ejecutando
-    console.log("index.js: DOM ready. Iniciando script.");
+    console.log("index.js: DOM ready. Esperando evento 'sessionChecked' desde notifications.js.");
 
-    // --- PASO 1: VERIFICAR DEPENDENCIAS Y DATOS INICIALES ---
-    if (typeof jQuery === 'undefined') { console.error("FATAL ERROR: jQuery no está cargado."); alert("Error crítico: Falta jQuery."); return; }
-    console.log("index.js: jQuery detectado.");
-    if (typeof bootstrap === 'undefined' || typeof bootstrap.Modal !== 'function') { console.warn("Advertencia: Bootstrap JS no está completamente cargado."); }
-    else { console.log("index.js: Bootstrap JS detectado."); }
-    
-    if (typeof mockIndexData === 'undefined' || !mockIndexData || !mockIndexData.allRecipes) {
-        console.error("CRITICAL ERROR: mockIndexData o mockIndexData.allRecipes no está definido o es null. Verifica que js_data/index-data.js se carga ANTES que index.js, no tenga errores y defina 'mockIndexData'.");
-        $('#popularRecipesContainer, #trendingRecipesContainer, #featuredChefsContainer').html('<p class="text-center text-danger p-3">Error crítico: No se pudieron cargar los datos base de recetas.</p>');
-        return; 
-    }
-    console.log("index.js: mockIndexData cargado. Recetas base:", mockIndexData.allRecipes.length);
+    // Escuchar el evento personalizado disparado por notifications.js
+    $(document).on('sessionChecked', function(event, sessionResponse) {
+        console.log("index.js: Evento 'sessionChecked' recibido. Datos de sesión:", sessionResponse);
+        loadInitialPageContent(sessionResponse); 
+    });
 
-    // MODIFICADO: Verificar la nueva función de get-dietas.js
-    if (typeof fetchDietTypesFromAPI === 'undefined' || typeof fetchDietTypesFromAPI !== 'function' ) { 
-        console.error("CRITICAL ERROR: fetchDietTypesFromAPI no está definida. Asegúrate de que js/ajax/get-dietas.js se carga ANTES que index.js y define 'fetchDietTypesFromAPI'.");
-        $('#dietFilter').prop('disabled', true).html('<option value="">Error servicio dietas</option>');
-    } else {
-        console.log("index.js: fetchDietTypesFromAPI (de get-dietas.js) detectado.");
-    }
-
-    const baseRecipes = mockIndexData.allRecipes ? [...mockIndexData.allRecipes] : [];
-    const chefs = mockIndexData.chefs || [];
-
-    const $mainSearchInput = $('#mainSearchInput');
-    const $timeMaxSlider = $('#timeMaxSlider');
-    const $timeMaxValueDisplay = $('#timeMaxValueDisplay');
-    const $categoryFilter = $('#categoryFilter');
-    const $dietFilterSelect = $('#dietFilter'); 
-    const $difficultyFilter = $('#difficultyFilter');
-    const $sortOrderFilter = $('#sortOrderFilter');
-    const $applyFiltersBtn = $('#applyFiltersBtn');
-    const $popularContainer = $('#popularRecipesContainer');
-    const $trendingContainer = $('#trendingRecipesContainer');
-    const $featuredChefsContainer = $('#featuredChefsContainer');
-
-    function formatTimeForDisplaySlider(minutes) {
-        const numMinutes = parseInt(minutes);
-        if (numMinutes === 0) return "Cualquiera"; 
-        if (numMinutes >= 180) return "+3 horas"; 
-        const h = Math.floor(numMinutes / 60);
-        const m = numMinutes % 60;
-        let timeString = "";
-        if (h > 0) timeString += `${h}h `;
-        if (m > 0) timeString += `${m}min`;
-        return timeString.trim() || "0 min";
-    }
-
-    function filterAndRenderRecipes() {
-        console.log("index.js: filterAndRenderRecipes() INICIO.");
-        const searchTerm = $mainSearchInput.val().toLowerCase().trim();
-        const maxTimeSelected = parseInt($timeMaxSlider.val());
-        const selectedCategory = $categoryFilter.val();
-        const selectedDiet = $dietFilterSelect.val(); 
-        const selectedDifficulty = $difficultyFilter.val();
-        const sortOrder = $sortOrderFilter.val();
-
-        console.log("index.js: Filtros aplicados:", {searchTerm, maxTimeSelected, selectedCategory, selectedDiet, selectedDifficulty, sortOrder});
-        let filteredRecipes = [...baseRecipes]; 
-
-        if (searchTerm) {
-            filteredRecipes = filteredRecipes.filter(recipe => 
-                (recipe.title && recipe.title.toLowerCase().includes(searchTerm)) ||
-                (recipe.author && recipe.author.toLowerCase().includes(searchTerm)) ||
-                (recipe.ingredients && Array.isArray(recipe.ingredients) && recipe.ingredients.some(ing => String(ing).toLowerCase().includes(searchTerm)))
-            );
+    // --- SECCIÓN: LÓGICA DE CARGA DE CONTENIDO ESPECÍFICO DE INDEX.HTML ---
+    function loadInitialPageContent(sessionData) {
+        // Verificar dependencias para el contenido del index
+        if (typeof mockIndexData === 'undefined' || !mockIndexData || !mockIndexData.allRecipes) {
+            console.error("index.js: Error crítico - mockIndexData no disponible.");
+            $('#popularRecipesContainer, #trendingRecipesContainer, #featuredChefsContainer')
+                .html('<p class="text-center text-danger col-12">Error: No se pudieron cargar los datos base.</p>');
+            return; 
         }
 
-        if (maxTimeSelected > 0 && maxTimeSelected < 180) { 
-            filteredRecipes = filteredRecipes.filter(recipe => {
-                const recipeTime = recipe.timeInMinutes;
-                return typeof recipeTime === 'number' && recipeTime <= maxTimeSelected;
+        // Verificar si las funciones para cargar tipos de dieta existen
+        if (typeof fetchDietTypesFromAPI === 'undefined' || typeof loadAndPopulateDietTypes !== 'function') {
+            console.warn("index.js: Funciones para cargar tipos de dieta no disponibles. El filtro de dietas podría no funcionar desde API.");
+        }
+
+        // Selectores para los elementos de contenido de la página index
+        const $popularContainer = $('#popularRecipesContainer');
+        const $trendingContainer = $('#trendingRecipesContainer');
+        const $featuredChefsContainer = $('#featuredChefsContainer');
+        const chefs = mockIndexData.chefs || [];
+        
+        // Configuración del Slider de Tiempo y Listeners de Filtros
+        const $timeMaxSlider = $('#timeMaxSlider');
+        const $timeMaxValueDisplay = $('#timeMaxValueDisplay');
+        
+        if ($timeMaxSlider.length && $timeMaxValueDisplay.length) {
+            $timeMaxSlider.on('input', function() {
+                $timeMaxValueDisplay.text(formatTimeForDisplaySlider($(this).val()));
             });
+            $timeMaxSlider.trigger('input');
         }
-        
-        if (selectedCategory) filteredRecipes = filteredRecipes.filter(r => r.category === selectedCategory);
-        // Ajuste importante aquí para el filtro de dieta:
-        // Asegúrate que el 'value' de las opciones de dieta (ej. 'vegetarian', 'vegan')
-        // coincida con lo que tienes en recipe.diet en mockIndexData.allRecipes
-        if (selectedDiet) {
-             console.log("Filtrando por dieta:", selectedDiet);
-             filteredRecipes = filteredRecipes.filter(r => {
-                 console.log(`  Receta ${r.title}, dieta: ${r.diet}, coincide? ${r.diet === selectedDiet}`);
-                 return r.diet === selectedDiet;
-             });
-        }
-        if (selectedDifficulty) filteredRecipes = filteredRecipes.filter(r => r.difficulty === selectedDifficulty);
 
-        switch (sortOrder) {
-            case 'time_asc': filteredRecipes.sort((a, b) => (a.timeInMinutes || 0) - (b.timeInMinutes || 0)); break;
-            case 'time_desc': filteredRecipes.sort((a, b) => (b.timeInMinutes || 0) - (a.timeInMinutes || 0)); break;
-            case 'recent': filteredRecipes.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate)); break;
-            case 'popularity': default: filteredRecipes.sort((a, b) => (b.likes || 0) - (a.likes || 0)); break;
-        }
-        
-        console.log("index.js: Número de recetas después de filtrar y ordenar:", filteredRecipes.length);
-        
-        renderRecipeCards($popularContainer, filteredRecipes, "No hay recetas populares que coincidan.");
-        
-        const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        const trendingFromFiltered = filteredRecipes.filter(recipe => new Date(recipe.publishDate) >= oneWeekAgo).slice(0, 9); 
-        renderRecipeCards($trendingContainer, trendingFromFiltered, "No hay tendencias que coincidan.");
-        console.log("index.js: filterAndRenderRecipes() FIN.");
-    }
-
-    function renderRecipeCards($container, recipesToRender, emptyMessage) {
-        $container.empty();
-        if (recipesToRender && recipesToRender.length > 0) {
-            recipesToRender.forEach(recipe => $container.append(createRecipeCard(recipe)));
-        } else {
-            $container.html(`<p class="text-center text-muted placeholder-recipes">${emptyMessage}</p>`);
-        }
-    }
-
-    function createRecipeCard(recipe) {
-        const $card = $('<div>').addClass('col');
-        const recipeLink = `recipe.html?id=${recipe.id || ''}`;
-        const authorProfileLink = `profile.html?userId=${recipe.authorId || ''}`;
-        const cardHtml = `
-            <div class="card h-100 shadow-sm">
-                <a href="${recipeLink}" class="text-decoration-none">
-                    <img src="${recipe.image || 'resources/default-recipe.jpg'}" class="card-img-top" alt="${escapeHTML(recipe.title || 'Receta sin título')}">
-                </a>
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title mb-1">
-                        <a href="${recipeLink}" class="text-dark text-decoration-none stretched-link">${escapeHTML(recipe.title || 'Receta')}</a>
-                    </h5>
-                    <p class="card-text text-muted small mb-2">
-                        Por: <a href="${authorProfileLink}" class="text-orange text-decoration-none">${escapeHTML(recipe.author || 'Autor desconocido')}</a>
-                    </p>
-                    <div class="mt-auto d-flex justify-content-between align-items-center">
-                        <span class="rating text-danger">
-                            <i class="fas fa-heart"></i> ${recipe.likes || 0}
-                        </span>
-                        <span class="badge bg-light text-dark">
-                            <i class="far fa-clock"></i> ${escapeHTML(recipe.time || 'N/A')}
-                        </span>
-                    </div>
-                </div>
-            </div>`;
-        $card.html(cardHtml);
-        return $card;
-    }
-
-    function createChefCard(chef) {
-        const $card = $('<div>').addClass('col');
-        const chefProfileLink = `profile.html?userId=${chef.id || ''}`;
-        const cardHtml = `
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <a href="${chefProfileLink}" class="text-decoration-none">
-                        <img src="${chef.avatar || 'resources/default-avatar.png'}" alt="${escapeHTML(chef.name || 'Chef')}" class="avatar mb-3 img-thumbnail p-1">
-                    </a>
-                    <h5 class="card-title mb-1">
-                         <a href="${chefProfileLink}" class="text-dark text-decoration-none stretched-link">${escapeHTML(chef.name || 'Chef Anónimo')}</a>
-                    </h5>
-                    <p class="card-text text-muted small">${escapeHTML(chef.followers || '0')} seguidores</p>
-                </div>
-            </div>`;
-        $card.html(cardHtml);
-        return $card;
-    }
-
-    function escapeHTML(str) {
-        if (str === null || typeof str === 'undefined') return '';
-        return $('<div>').text(String(str)).html();
-    }
-    
-    $timeMaxSlider.on('input', function() { $timeMaxValueDisplay.text(formatTimeForDisplaySlider($(this).val())); });
-    $timeMaxSlider.trigger('input'); 
-
-    $applyFiltersBtn.on('click', filterAndRenderRecipes);
-    $mainSearchInput.on('keypress', function(e) { if (e.which === 13) filterAndRenderRecipes(); });
-    $('#categoryFilter, #dietFilter, #difficultyFilter, #sortOrderFilter, #timeMaxSlider').on('change', filterAndRenderRecipes);
-
-    // --- MODIFICADO: Lógica para cargar tipos de dieta ---
-    function loadAndPopulateDietTypes() {
-        // MODIFICADO: Verificar si la función fetchDietTypesFromAPI está disponible
-        if (typeof fetchDietTypesFromAPI === 'undefined' || typeof fetchDietTypesFromAPI !== 'function' || !$dietFilterSelect.length) {
-            console.warn("index.js: No se puede poblar select de dietas: fetchDietTypesFromAPI o elemento select no encontrado.");
-            if ($dietFilterSelect.length && ($dietFilterSelect.children('option').length === 0 || $dietFilterSelect.find('option[value=""]').text().toLowerCase().includes("cargando"))) {
-                 $dietFilterSelect.html('<option value="" selected>Dieta (Todas)</option><option value="" disabled>Error al cargar</option>').prop('disabled', false);
+        $('#applyFiltersBtn').on('click', filterAndRenderRecipes);
+        $('#mainSearchInput').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                filterAndRenderRecipes();
             }
-            // Devolver una promesa rechazada para que .always() se ejecute en loadInitialContent
-            return $.Deferred().reject({ message: "Servicio de dietas no disponible" }).promise();
+        });
+        
+        $('#categoryFilter, #dietFilter, #difficultyFilter, #sortOrderFilter, #timeMaxSlider')
+            .on('change', filterAndRenderRecipes);
+
+        // Carga de Tipos de Dieta (debe devolver una promesa)
+        let dietTypesPromise;
+        if (typeof loadAndPopulateDietTypes === 'function') {
+            dietTypesPromise = loadAndPopulateDietTypes();
+        } else {
+            dietTypesPromise = $.Deferred().resolve().promise();
+            const $dietFilterSelect = $('#dietFilter');
+            if ($dietFilterSelect.length) {
+                $dietFilterSelect.html(
+                    '<option value="" selected>Dieta (Todas)</option>' +
+                    '<option value="" disabled>Servicio no disponible</option>'
+                ).prop('disabled', false);
+            }
         }
 
-        $dietFilterSelect.prop('disabled', true).html('<option value="">Cargando dietas...</option>');
-        console.log("index.js: Iniciando carga de tipos de dieta vía fetchDietTypesFromAPI()...");
-
-        // MODIFICADO: Llamar a la nueva función
-        return fetchDietTypesFromAPI()
-            .then(function(response) { 
-                console.log("index.js (AJAX .then): Respuesta de tipos de dieta RECIBIDA:", response);
-                $dietFilterSelect.empty().prop('disabled', false); 
-                
-                $dietFilterSelect.append($('<option>', { value: '', text: 'Dieta (Todas)' }).prop('selected', true));
-
-                if (response && response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
-                    console.log("index.js: Poblando select de dietas con", response.data.length, "elementos.");
-                    
-                    $.each(response.data, function(index, dieta) {
-                        console.log(`  Procesando dieta ${index}:`, dieta);
-                        
-                        // ASUNCIÓN CLAVE: La API devuelve 'id' que se usará como `value`
-                        // y 'nombre_dieta' para el texto.
-                        // Es CRUCIAL que el `dieta.id` devuelto por la API
-                        // coincida con los valores de 'diet' en tus `mockIndexData.allRecipes`
-                        // (ej. si la API devuelve id=1 y nombre="Vegetariana", pero en tus recetas usas diet="vegetarian",
-                        // tendrás que mapear esto o hacer que la API devuelva 'vegetarian' como id/slug).
-                        // En tu PHP de ejemplo (get_diet_types.php) devuelves 'id' y 'nombre_dieta'.
-                        // Y en tu mockData tienes 'diet: "omnivore"', 'diet: "vegetarian"', etc.
-                        // ¡Estos deben coincidir o el filtro de dieta no funcionará!
-                        // Idealmente, la API debería devolver un `slug` (ej. "vegetarian") que sea el mismo que usas en `mockIndexData`.
-                        
-                        let optionValue = dieta.id; // Directamente el ID de la base de datos
-                        let optionText = dieta.nombre_dieta;
-
-                        // SI TU API DEVUELVE ID NUMÉRICO PERO NECESITAS SLUGS PARA FILTRAR:
-                        // Necesitarías una lógica de mapeo aquí o, mejor, que tu API devuelva el slug.
-                        // Ejemplo de mapeo (NO IDEAL, MEJOR EN API):
-                        // if (dieta.id == 1 && dieta.nombre_dieta.toLowerCase().includes("omnívora")) optionValue = "omnivore";
-                        // else if (dieta.id == 2 && dieta.nombre_dieta.toLowerCase().includes("vegetariana")) optionValue = "vegetarian";
-                        // etc.
-
-                        // Lo que tienes en `index-data.js` es 'diet: "omnivore"', 'diet: "vegetarian"', 'diet: "vegan"'.
-                        // Por lo tanto, tu API get_diet_types.php debe devolver estos strings como el 'id' (o un campo 'slug')
-                        // para que el filtro funcione directamente.
-                        // Si tu `tipos_dieta_receta.id` en la DB son strings como "vegetarian", entonces `optionValue = dieta.id` está bien.
-                        // Si son números, necesitarás el mapeo o modificar la API.
-                        // Por simplicidad para esta prueba, vamos a asumir que tu PHP ya devuelve el slug/string correcto en `dieta.id` o añades un `dieta.slug`.
-                        // Si la API devuelve un ID numérico, este console.log es importante:
-                        console.log(`    Añadiendo opción: value="${escapeHTML(String(optionValue))}", text="${escapeHTML(optionText)}" -- ¡ASEGÚRATE QUE EL VALOR COINCIDA CON recipe.diet EN mockIndexData!`);
-
-
-                        if(optionValue && optionText) {
-                            $dietFilterSelect.append($('<option>', {
-                                value: escapeHTML(String(optionValue)), // Asegurar que sea string
-                                text: escapeHTML(optionText)
-                            }));
-                        } else {
-                            console.warn("    Opción de dieta omitida por falta de valor o texto:", dieta);
-                        }
-                    });
-                } else {
-                    const message = response ? (response.message || (response.data && response.data.length === 0 ? "No hay dietas." : "Respuesta vacía o no exitosa.")) : "Respuesta indefinida.";
-                    console.warn("index.js: No se cargaron tipos de dieta válidos. Mensaje:", message);
-                }
-            })
-            .catch(function(jqXHR) { 
-                let userMessage;
-                if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.message) {
-                    console.error("index.js (AJAX .catch): Error del servidor (JSON):", jqXHR.responseJSON.message);
-                    userMessage = jqXHR.responseJSON.message;
-                } else if (jqXHR && jqXHR.statusText) { 
-                    console.error("index.js (AJAX .catch): Fallo de red/HTTP. Status:", jqXHR.status, "Texto:", jqXHR.statusText, "Respuesta:", jqXHR.responseText);
-                    userMessage = `Error de red: ${jqXHR.statusText} (${jqXHR.status})`;
-                } else {
-                     console.error("index.js (AJAX .catch): Error desconocido al cargar dietas. Info:", jqXHR);
-                     userMessage = "Error desconocido al cargar dietas.";
-                }
-                $dietFilterSelect.prop('disabled', false).html(`<option value="">${escapeHTML(userMessage)}</option>`);
-            });
-    }
-    
-    function loadInitialContent() {
-        console.log("index.js: loadInitialContent() llamado.");
-        
-        const dietTypesPromise = loadAndPopulateDietTypes(); 
-
-        dietTypesPromise.always(function(dataOrjqXHR, textStatus, jqXHROrErrorThrown) { 
-            console.log("index.js: Promesa de loadAndPopulateDietTypes finalizada. Status del always:", textStatus, ". Renderizando contenido principal...");
-            // Forzar el renderizado incluso si las dietas fallaron, para mostrar el resto.
-            filterAndRenderRecipes(); 
+        // Cuando las dietas se cargan (o el intento falla), renderizar el resto
+        dietTypesPromise.always(function() {
+            filterAndRenderRecipes();
             
-            $featuredChefsContainer.empty();
-            if (chefs && chefs.length > 0) {
-                chefs.slice(0, 9).forEach(chef => $featuredChefsContainer.append(createChefCard(chef)));
-            } else {
-                $featuredChefsContainer.html('<p class="text-center text-muted placeholder-chefs">No hay chefs destacados.</p>');
+            // Renderizar Chefs Destacados
+            if ($featuredChefsContainer.length) {
+                $featuredChefsContainer.empty();
+                if (chefs && chefs.length > 0) {
+                    chefs.slice(0, 9).forEach(chef => {
+                        $featuredChefsContainer.append(createChefCard(chef));
+                    });
+                } else { 
+                    $featuredChefsContainer.html(
+                        '<p class="text-center text-muted col-12">No hay chefs destacados en este momento.</p>'
+                    ); 
+                }
             }
         });
     }
 
-    loadInitialContent(); 
-    console.log("index.js: Script completamente configurado y listeners listos.");
+    // --- FUNCIONES AUXILIARES ---
+    function formatTimeForDisplaySlider(minutesValue) {
+        const m = parseInt(minutesValue, 10);
+        if (isNaN(m) || m === 0) return "Cualquiera";
+        if (m >= 180) return "+3h";
+        
+        const h = Math.floor(m / 60);
+        const rM = m % 60;
+        let tS = "";
+        
+        if (h > 0) tS += `${h}h `;
+        if (rM > 0) tS += `${rM}min`;
+        
+        return tS.trim() || "0min";
+    }
+
+        function createRecipeCard(recipe) {
+        const $c = $('<div>').addClass('col');
+        const rL = `recipe.html?id=${recipe.id || ''}`;
+        const aL = `profile.html?userId=${recipe.authorId || ''}`;
+        const cH = `
+            <div class="card h-100 shadow-sm recipe-card">
+                <a href="${rL}" class="text-decoration-none">
+                    <img src="${escapeHTML(recipe.image || 'resources/default-recipe.jpg')}" 
+                         class="card-img-top" 
+                         alt="${escapeHTML(recipe.title || 'R')}">
+                </a>
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title mb-1">
+                        <a href="${rL}" class="text-dark stretched-link text-decoration-none"> 
+                            ${escapeHTML(recipe.title || 'R')}
+                        </a>
+                    </h5>
+                    <p class="card-text text-muted small mb-2">
+                        Por:
+                        <a href="${aL}" class="text-orange text-decoration-none"> 
+                            ${escapeHTML(recipe.author || 'Autor X')}
+                        </a>
+                    </p>
+                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                        <span class="rating text-danger">
+                            <i class="fas fa-heart me-1"></i>${recipe.likes || 0}
+                        </span>
+                        <span class="badge bg-light text-dark">
+                            <i class="far fa-clock me-1"></i>${escapeHTML(recipe.time || 'N/A')}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+        $c.html(cH);
+        return $c;
+    }
+
+        function createChefCard(chef) {
+        const $c = $('<div>').addClass('col');
+        const cL = `profile.html?userId=${chef.id || ''}`;
+        // Asegúrate de que los enlaces <a> tengan la clase 'text-decoration-none'
+        const cH = `
+            <div class="card h-100 shadow-sm chef-card">
+                <div class="card-body text-center d-flex flex-column align-items-center">
+                    <a href="${cL}" class="text-decoration-none"> 
+                        <img src="${escapeHTML(chef.avatar || 'resources/default-avatar.png')}" 
+                             alt="${escapeHTML(chef.name || 'Chef')}" 
+                             class="avatar mb-3 img-thumbnail p-1 rounded-circle" 
+                             style="width:80px;height:80px;object-fit:cover;">
+                    </a>
+                    <h5 class="card-title mb-1">
+                        <a href="${cL}" class="text-dark stretched-link text-decoration-none"> 
+                            ${escapeHTML(chef.name || 'Chef X')}
+                        </a>
+                    </h5>
+                    <p class="card-text text-muted small">
+                        ${escapeHTML(chef.followers || '0')} seguidores
+                    </p>
+                </div>
+            </div>
+        `;
+        $c.html(cH);
+        return $c;
+    }
+
+    function renderRecipeCards($con, recipes, msg) {
+        if (!$con || !$con.length) return;
+        
+        $con.empty();
+        
+        if (recipes && recipes.length > 0) {
+            recipes.forEach(r => $con.append(createRecipeCard(r)));
+        } else {
+            $con.html(`<div class="col-12"><p class="text-center text-muted p-3">${msg}</p></div>`);
+        }
+    }
+    
+    function filterAndRenderRecipes() {
+        const baseR = (typeof mockIndexData !== 'undefined' && mockIndexData.allRecipes) 
+            ? [...mockIndexData.allRecipes] 
+            : [];
+        
+        const $mainSearch = $('#mainSearchInput');
+        const $timeSlider = $('#timeMaxSlider');
+        const $catFilter = $('#categoryFilter');
+        const $dietFilter = $('#dietFilter');
+        const $diffFilter = $('#difficultyFilter');
+        const $sortFilter = $('#sortOrderFilter');
+        const $popCon = $('#popularRecipesContainer');
+        const $trendCon = $('#trendingRecipesContainer');
+        
+        let fR = [...baseR];
+        
+        // Obtener valores de los filtros
+        const sT = $mainSearch.length ? $mainSearch.val().toLowerCase().trim() : "";
+        const maxT = $timeSlider.length ? parseInt($timeSlider.val(), 10) : 0;
+        const selCat = $catFilter.length ? $catFilter.val() : "";
+        const selDiet = $dietFilter.length ? $dietFilter.val() : "";
+        const selDiff = $diffFilter.length ? $diffFilter.val() : "";
+        const sortO = $sortFilter.length ? $sortFilter.val() : "popularity";
+        
+        // Aplicar filtros
+        if (sT) {
+            fR = fR.filter(r => 
+                (r.title && r.title.toLowerCase().includes(sT)) || 
+                (r.author && r.author.toLowerCase().includes(sT))
+            );
+        }
+        
+        if (maxT > 0 && maxT < 180) {
+            fR = fR.filter(r => typeof r.timeInMinutes === 'number' && r.timeInMinutes <= maxT);
+        }
+        
+        if (selCat) fR = fR.filter(r => r.category === selCat);
+        if (selDiet) fR = fR.filter(r => r.diet === selDiet);
+        if (selDiff) fR = fR.filter(r => r.difficulty === selDiff);
+        
+        // Ordenar resultados
+        switch (sortO) {
+            case 'time_asc':
+                fR.sort((a, b) => (a.timeInMinutes || Infinity) - (b.timeInMinutes || Infinity));
+                break;
+            case 'time_desc':
+                fR.sort((a, b) => (b.timeInMinutes || 0) - (a.timeInMinutes || 0));
+                break;
+            case 'recent':
+                fR.sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
+                break;
+            case 'popularity':
+            default:
+                fR.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+                break;
+        }
+        
+        // Renderizar resultados
+        if ($popCon.length) {
+            renderRecipeCards($popCon, fR, "No hay recetas populares con estos filtros.");
+        }
+        
+        if ($trendCon.length) {
+            const oWA = new Date();
+            oWA.setDate(oWA.getDate() - 7);
+            const t = fR.filter(r => new Date(r.publishDate) >= oWA)
+                      .sort((a, b) => (b.likes || 0) - (a.likes || 0));
+            renderRecipeCards($trendCon, t, "No hay tendencias recientes.");
+        }
+    }
+
+    function loadAndPopulateDietTypes() {
+        const $dFS = $('#dietFilter');
+        if (!$dFS.length) {
+            return $.Deferred().resolve().promise();
+        }
+        
+        if (typeof fetchDietTypesFromAPI !== 'function') {
+            console.warn("index.js: loadAndPopulateDietTypes - fetchDietTypesFromAPI no def.");
+            $dFS.html('<option value="">Dieta(Todas)</option><option value="" disabled>Error</option>')
+               .prop('disabled', false);
+            return $.Deferred().reject().promise();
+        }
+        
+        $dFS.prop('disabled', true).html('<option value="">Cargando...</option>');
+        
+        return fetchDietTypesFromAPI()
+            .done(function(resp) {
+                $dFS.empty().prop('disabled', false)
+                    .append($('<option>', { value: '', text: 'Dieta (Todas)' }).prop('selected', true));
+                
+                if (resp && resp.success && resp.data && resp.data.length > 0) {
+                    $.each(resp.data, function(i, d) {
+                        $dFS.append($('<option>', {
+                            value: escapeHTML(String(d.id)),
+                            text: escapeHTML(d.nombre_dieta)
+                        }));
+                    });
+                } else {
+                    $dFS.append($('<option value="" disabled>No dietas</option>'));
+                }
+            })
+            .fail(function() {
+                $dFS.prop('disabled', false).html('<option value="">Error</option>');
+            });
+    }
 });

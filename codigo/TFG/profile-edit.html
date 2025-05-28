@@ -26,51 +26,72 @@
 </head>
 <body class="bg-orange-light">
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
-        <div class="container">
-            <a class="navbar-brand text-orange fw-bold fs-3" href="index.html">CookSocial</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavCookSocial" aria-controls="navbarNavCookSocial" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNavCookSocial">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item" id="nav-admin-link">
+                <div class="container">
+                    <a class="navbar-brand text-orange fw-bold fs-3" href="index.html">CookSocial</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavCookSocial" aria-controls="navbarNavCookSocial" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                        <div class="collapse navbar-collapse" id="navbarNavCookSocial">
+                            <!-- UL de links principales (se mostrará si hay admin link o futuros links para usuarios) -->
+                            <ul class="navbar-nav me-auto mb-2 mb-lg-0 d-none" id="nav-main-links"> 
+                                <li class="nav-item d-none" id="nav-admin-link">
+                                    <a class="nav-link" href="admin.html">Administrar</a>
+                                </li>
+                                <!-- Podrías tener otros li aquí que también se manejen con d-none y se muestren si el usuario está logueado -->
+                                <!-- Ejemplo: <li class="nav-item d-none" id="nav-my-recipes-link"><a class="nav-link" href="myrecipes.html">Mis Recetas</a></li> -->
+                            </ul>
+                            <div class="d-flex align-items-center ms-lg-auto">
+                                <!-- Botones para usuarios NO logueados (oculto por defecto, se mostrará si no hay sesión) -->
+                                <div id="user-auth-buttons" class="d-flex align-items-center d-none">
+                                    <a href="logReg.html#login" class="btn btn-outline-secondary me-2">Iniciar Sesión</a>
+                                    <a href="logReg.html#register" class="btn btn-orange">Registrarse</a>
+                                </div>
+                                            <div class="collapse navbar-collapse" id="navbarNavCookSocial">
+                <!-- UL de links principales (se mostrará si hay admin link o futuros links para usuarios) -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 d-none" id="nav-main-links"> 
+                    <li class="nav-item d-none" id="nav-admin-link"> <!-- Oculto por defecto -->
                         <a class="nav-link" href="admin.html">Administrar</a>
                     </li>
+                    <!-- Aquí podrías añadir otros links que solo ven usuarios logueados -->
                 </ul>
                 <div class="d-flex align-items-center ms-lg-auto">
-                    <div id="user-auth-buttons" class="d-flex align-items-center">
+                    <!-- Botones para usuarios NO logueados (d-none se quitará si no hay sesión) -->
+                    <div id="user-auth-buttons" class="d-flex align-items-center d-none">
                         <a href="logReg.html#login" class="btn btn-outline-secondary me-2">Iniciar Sesión</a>
-                        <a href="logReg.html" class="btn btn-orange">Registrarse</a>
+                        <a href="logReg.html#register" class="btn btn-orange">Registrarse</a>
                     </div>
-                    <div id="user-profile-buttons" class="d-flex align-items-center">
-                        <a href="formReceta.html" class="btn btn-success me-2">
-                            <span class="d-inline d-md-none" title="Publicar Receta"><i class="fas fa-plus"></i></span>
+                    <!-- Botones para usuarios SÍ logueados (d-none se quitará si hay sesión) -->
+                    <div id="user-profile-buttons" class="d-flex align-items-center d-none">
+                        <a href="formReceta.html" class="btn btn-success me-2" title="Publicar Receta">
+                            <span class="d-inline d-md-none"><i class="fas fa-plus"></i></span>
                             <span class="d-none d-md-inline">Publicar Receta</span>
                         </a>
                         <div class="dropdown me-2 notification-dropdown">
                             <button class="btn btn-outline-secondary position-relative" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
                                 <i class="fas fa-bell"></i>
-                                <span id="notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                <span id="notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">
                                     <span class="visually-hidden">notificaciones no leídas</span>
                                 </span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="notificationsDropdown" id="notificationsList">
-                                <li><p class="text-center text-muted p-3 mb-0">No tienes notificaciones nuevas.</p></li>
+                                <li><p class="text-center text-muted p-3 mb-0">Cargando...</p></li>
                             </ul>
                         </div>
-                        <a href="profile.html" class="btn btn-outline-secondary me-2">
-                            <span class="d-inline d-md-none" title="Mi Perfil"><i class="fas fa-user"></i></span>
+                        <a href="profile.html" class="btn btn-outline-secondary me-2" title="Mi Perfil">
+                            <span class="d-inline d-md-none"><i class="fas fa-user"></i></span>
                             <span class="d-none d-md-inline">Mi Perfil</span>
                         </a>
-                        <button id="logoutButton" class="btn btn-outline-danger">
-                            <span class="d-inline d-md-none" title="Salir"><i class="fas fa-sign-out-alt"></i></span>
+                        <button id="logoutButton" class="btn btn-outline-danger" title="Salir">
+                            <span class="d-inline d-md-none"><i class="fas fa-sign-out-alt"></i></span>
                             <span class="d-none d-md-inline">Salir</span>
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
-    </nav>
+                            </div>
+                        </div>
+                </div>
+</nav>
 
     <!-- Main Content -->
     <main class="container my-5">
